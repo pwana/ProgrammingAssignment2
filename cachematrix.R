@@ -1,53 +1,54 @@
-## makeCacheMatrix calls functions to set and get a matrix
-## of values and pass them up to the global environment, so that they 
-## can be passed back and forth between other functions-- in this case,
-## cacheSolve, calls makeCacheMatrix data and functions inside of its
-## local environment and allows the auxillery function (makeCacheMatrix) to
-## write and read the data and pass it back in.
+# makeCacheMatrix contains four functions.
+# 1) set 2) get 3) setinverse 4)getinverse
+# The four functions can be called as attribute properties of 
+# the function that calls makeCacheMatrix.
 
-## makeCacheMatrix takes a matrix as argument and has the following 
-# sub functions# 
-# 1) set  sets a global variable x, to the value of the matrix passed to the function.
-# and initializes the inv matrix to NULL.
-# 2) get simply passes the matrix x 
-# 3) setinverse passes the inv matrix (we tmp set it to  foo for clarity)
-# to the global environment, so it can be utilized outside the environment.
-# 4) getinverse passes the current value of inv
-# return all these function results in a list with corresponding names.
+# It takes as an argument, x = matrix, a matrix of data.
+
+
 
 makeCacheMatrix <- function(x = matrix()) {
-        inv <- NULL
-        set <- function(y) {
-                x <<- y
-                inv <<- NULL
-        }
-        get <- function() x
-        setinverse <- function(foo) inv <<- foo
-        getinverse <- function() inv
-        list(set = set, get = get,
-             setinverse = setinverse,
-             getinverse = getinverse)
+inv <- NULL #initialize inv to NULL (empty)
+
+# set takes argument y, when called by makeCacheMatrix set attribute
+# and sets global var x to the value of y that is passed in.
+# inv is globally set to NULL ( both via superassignment operator)
+
+set <- function(y) {
+x <<- y
+inv <<- NULL
+}
+get <- function() x # get just returns var x to the function calling it
+setinverse <- function(foo) inv <<- foo #setinverse will pass foo from global env
+# and pass it to global environment. This allows calling function, to cache operations
+# by setting the inverse (inv) variable globally and store it in memory.
+getinverse <- function() inv # getinverse will call whatever inv is currently holding
+# if it was set by setinverse from cachesolve, it returns the cashed matrix inv or
+# if still empty returns NULL
+list(set = set, get = get,
+setinverse = setinverse,
+getinverse = getinverse) # returns a list of all of the current functions and any
+#variables they hold
 }
 
 
-## cacheSolve, utilizes the power of lexical scoping and the superassignment
-# operator to read, and write files to an auxiliary function that it calls 
-# -- the argument x, that gets - passed is the auxillery function, makeCacheMatrix.
-# the inv matrix is assigned by calling the function makeCacheMatrix, and setting to
-# the getInverse subfunction of makeCacheMatrix.
-# then the data is passed to data via x$get and inv is solved locally and x is
-# set or has the set inverse inv value set to the local function return.
- 
+# cacheSolve is essentially taking in the matrix variable x, with row, col properties
+# the major cacheMatrix and matrix functions are called inside of this function and cached to global 
+# memory using the cacheMatrix function. They are then able to be retrieved using the 
+# same function. 
+
 cacheSolve <- function(x, ...) {
-        ## Return a matrix that is the inverse of 'x'
-        inv <- x$getinverse()
-        if(!is.null(inv)) {
-                message("getting cached data")
-                return(inv)
-        }
-        data <- x$get()
-        inv <- solve(data, ...)
-        x$setinverse(inv)
-        inv
-		
-		}
+## Return a matrix that is the inverse of 'x'
+inv <- x$getinverse() # here we pass whatever is stored in x from prior iteration.
+# it has to be set first by passing inv <- solve(data,...) and setting via x$setinv
+if(!is.null(inv)) {
+message("getting cached data")
+return(inv)
+} # the first time we run it will look to see if inv has been set previously and retrieve 
+# it with a message "getting cached data," if it wasn't set yet, it returns NULL.
+data <- x$get() # passes x from makeCacheMatrix to a variable called data
+inv <- solve(data, ...) # sets inv to the solve function and sets inv <- solve(data=x) the first time
+x$setinverse(inv) # here we pass our inv result to the temp variable foo in makeCacheMatrix
+# which gets passed and cached to global memory via the superassignment operator in makeCacheMatrix.
+inv # returns current value of inv from cacheSolve. 
+}
